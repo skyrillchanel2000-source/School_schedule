@@ -81,78 +81,113 @@ function renderItemsList() {
     });
     row.appendChild(trash);
 
-      // Поле предмета с возможностью ввода своего значения
-      const subjectInput = document.createElement("input");
-      subjectInput.type = "text";
-      subjectInput.value = item.subject || "";
-      subjectInput.style.flex = "1";
-      subjectInput.style.border = "none";
-      subjectInput.style.background = "transparent";
-      subjectInput.style.fontFamily = "inherit";
+      // Выбор предмета
+      const subjectSelect = document.createElement("select");
+      subjectSelect.style.flex = "1";
+      subjectSelect.style.border = "none";
+      subjectSelect.style.background = "transparent";
+      subjectSelect.style.fontFamily = "inherit";
       
-      // datalist для предметов
-      let subjectDatalist = document.getElementById("subjectDatalist");
-      if (!subjectDatalist) {
-        subjectDatalist = document.createElement("datalist");
-        subjectDatalist.id = "subjectDatalist";
-        document.body.appendChild(subjectDatalist);
-      }
-      subjectDatalist.innerHTML = "";
+      // Базовые предметы
+      const baseSubjects = ["Русский", "Литература"];
+      // Все предметы из items
+      const customSubjects = [...new Set(items.map(i => i.subject).filter(s => s && !baseSubjects.includes(s)))];
+      const allSubjects = [...baseSubjects, ...customSubjects];
+      
       allSubjects.forEach(subj => {
         const opt = document.createElement("option");
         opt.value = subj;
-        subjectDatalist.appendChild(opt);
+        opt.textContent = subj;
+        subjectSelect.appendChild(opt);
       });
       
-      subjectInput.setAttribute("list", "subjectDatalist");
+      // Опция "Свой предмет..."
+      const ownOpt = document.createElement("option");
+      ownOpt.value = "__own__";
+      ownOpt.textContent = "Свой предмет...";
+      subjectSelect.appendChild(ownOpt);
       
-      subjectInput.addEventListener("input", () => {
-        item.subject = subjectInput.value;
-        hasItemsChanges = true;
-        toggleSaveButtons();
-        recalcHours();
-        renderItemsList();
-        renderSchedule();
-        renderClassFilter();
+      subjectSelect.value = item.subject;
+      
+      subjectSelect.addEventListener("change", () => {
+        if (subjectSelect.value === "__own__") {
+          const val = prompt("Введите название предмета:");
+          if (val && val.trim()) {
+            item.subject = val.trim();
+            // Пересоздаём список, чтобы новый предмет появился в options
+            hasItemsChanges = true;
+            toggleSaveButtons();
+            recalcHours();
+            renderItemsList();
+            renderSchedule();
+            renderClassFilter();
+          } else {
+            // Возвращаем старое значение
+            subjectSelect.value = item.subject;
+          }
+        } else {
+          item.subject = subjectSelect.value;
+          hasItemsChanges = true;
+          toggleSaveButtons();
+          recalcHours();
+          renderItemsList();
+          renderSchedule();
+          renderClassFilter();
+        }
       });
       
-      row.appendChild(subjectInput);
+      row.appendChild(subjectSelect);
 
-      // Поле класса с возможностью ввода своего значения
-      const classInput = document.createElement("input");
-      classInput.type = "text";
-      classInput.value = item.class || "";
-      classInput.style.flex = "1";
-      classInput.style.border = "none";
-      classInput.style.background = "transparent";
-      classInput.style.fontFamily = "inherit";
+      // Выбор класса
+      const classSelect = document.createElement("select");
+      classSelect.style.flex = "1";
+      classSelect.style.border = "none";
+      classSelect.style.background = "transparent";
+      classSelect.style.fontFamily = "inherit";
       
-      // datalist для классов
-      let classDatalist = document.getElementById("classDatalist");
-      if (!classDatalist) {
-        classDatalist = document.createElement("datalist");
-        classDatalist.id = "classDatalist";
-        document.body.appendChild(classDatalist);
-      }
-      classDatalist.innerHTML = "";
-      uniqueClasses.forEach(cls => {
+      // Все классы из items
+      const allClasses = [...new Set(items.map(i => i.class).filter(c => !!c))];
+      
+      allClasses.forEach(cls => {
         const opt = document.createElement("option");
         opt.value = cls;
-        classDatalist.appendChild(opt);
+        opt.textContent = cls;
+        classSelect.appendChild(opt);
       });
       
-      classInput.setAttribute("list", "classDatalist");
+      // Опция "Свой класс..."
+      const ownClassOpt = document.createElement("option");
+      ownClassOpt.value = "__own__";
+      ownClassOpt.textContent = "Свой класс...";
+      classSelect.appendChild(ownClassOpt);
       
-      classInput.addEventListener("input", () => {
-        item.class = classInput.value;
-        hasItemsChanges = true;
-        toggleSaveButtons();
-        recalcHours();
-        renderSchedule();
-        renderClassFilter();
+      classSelect.value = item.class || "";
+      
+      classSelect.addEventListener("change", () => {
+        if (classSelect.value === "__own__") {
+          const val = prompt("Введите название класса:");
+          if (val && val.trim()) {
+            item.class = val.trim();
+            hasItemsChanges = true;
+            toggleSaveButtons();
+            recalcHours();
+            renderItemsList();
+            renderSchedule();
+            renderClassFilter();
+          } else {
+            classSelect.value = item.class;
+          }
+        } else {
+          item.class = classSelect.value;
+          hasItemsChanges = true;
+          toggleSaveButtons();
+          recalcHours();
+          renderSchedule();
+          renderClassFilter();
+        }
       });
       
-      row.appendChild(classInput);
+      row.appendChild(classSelect);
 
     // Часы
     const hoursSpan = document.createElement("span");
