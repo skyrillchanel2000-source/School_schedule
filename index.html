@@ -185,7 +185,6 @@
       transition: all 0.2s;
     }
     
-    /* Цвета ячеек расписания */
     .schedule-cell.bg-russian { background-color: var(--russian); }
     .schedule-cell.bg-literature { background-color: var(--literature); }
     .schedule-cell.bg-new { background-color: var(--new); }
@@ -335,7 +334,7 @@
   <button class="save-btn" id="saveBtn" onclick="saveData()">💾 Сохранить изменения</button>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzkFpRPvii6ZKupEH-0u88lztMlbKUWAYGAGsmZN8CmZfSqPuLImfkRZqWeZYZlXSs/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyEkvc0ew9nqPWtRAXcWmNZksOOhTe2qkOZTL6tScrY2uFByNyFh1YS4y8BlusUuIYvaA/exec";
     
     const times = [
       "0<br><small>8:00-8:30</small>", "1<br><small>8:30-9:10</small>", "2<br><small>9:20-10:00</small>",
@@ -370,8 +369,9 @@
       return [...new Set(state.subjects.map(s => s.name))];
     }
 
+    // ИСПРАВЛЕНИЕ: Явное преобразование в строку перед trim()
     function getUniqueClasses() {
-      return [...new Set(state.subjects.map(s => s.className).filter(c => c && c.trim() !== ''))].sort();
+      return [...new Set(state.subjects.map(s => String(s.className)).filter(c => c && c.trim() !== ''))].sort();
     }
 
     async function loadData() {
@@ -379,7 +379,6 @@
         const res = await fetch(API_URL);
         const data = await res.json();
         
-        // Если таблица пуста, создаём дефолтные значения
         if (!data.subjects || data.subjects.length === 0) {
           state.subjects = [
             { id: 1, name: 'Русский язык', className: '', plan: 0, fact: 0 },
@@ -388,10 +387,11 @@
         } else {
           state.subjects = data.subjects.map((row, i) => ({
             id: i,
-            name: row[0] || 'Русский язык',
-            className: row[1] || '',
-            plan: 0, // Будет пересчитано
-            fact: 0  // Будет пересчитано
+            name: String(row[0] || 'Русский язык'),
+            // ИСПРАВЛЕНИЕ: Гарантируем, что className всегда строка
+            className: String(row[1] || '').trim(),
+            plan: 0,
+            fact: 0
           }));
         }
         
@@ -405,24 +405,22 @@
         renderSchedule();
         populateClassFilter();
       } catch (e) {
-        alert('Ошибка загрузки данных. Проверьте консоль и доступ к таблице.');
+        alert('Ошибка загрузки данных. Проверьте консоль и имя листа в скрипте.');
         console.error(e);
       }
     }
 
     function calculateHours() {
-      // Сброс
       state.subjects.forEach(s => { s.plan = 0; s.fact = 0; });
 
       const countInGrid = (grid, type) => {
         if (!grid) return;
-        // grid - это массив строк. Пропускаем 0-ю строку (заголовки)
         for (let r = 1; r < grid.length; r++) {
-          for (let c = 1; c < grid[r].length; c++) { // Пропускаем 0-й столбец (время)
-            const val = grid[r][c];
+          for (let c = 1; c < grid[r].length; c++) {
+            const val = String(grid[r][c] || '').trim();
             if (!val || val === 'нет урока') continue;
             
-            const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val.trim());
+            const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
             if (match) {
               match[type]++;
             }
@@ -446,13 +444,11 @@
         div.className = `sidebar-item ${getSubjectClass(item.name)}`;
         div.dataset.id = item.id;
         
-        // Формируем опции предметов
         let subjOptions = uniqueSubj.map(s => `<option value="${s}" ${item.name === s ? 'selected' : ''}>${s}</option>`).join('');
         subjOptions += `<option value="new">+ Добавить предмет</option>`;
 
-        // Формируем опции классов
         let classOptions = `<option value="">-- нет --</option>`;
-        classOptions += uniqueCls.map(c => `<option value="${c}" ${item.className === c ? 'selected' : ''}>${c}</option>`).join('');
+        classOptions += uniqueCls.map(c => `<option value="${c}" ${String(item.className) === c ? 'selected' : ''}>${c}</option>`).join('');
         classOptions += `<option value="new">+ Добавить класс</option>`;
 
         div.innerHTML = `
@@ -510,7 +506,7 @@
           select.value = state.subjects[index].className;
         }
       } else {
-        state.subjects[index].className = select.value;
+        state.subjects[index].className = String(select.value);
         markDirty(); 
         calculateHours();
         renderSidebar(); 
@@ -553,7 +549,7 @@
       });
 
       const optionsHtml = `<option value="нет урока">нет урока</option>` + 
-        state.subjects.filter(s => s.className).map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
+        state.subjects.filter(s => String(s.className).trim() !== '').map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
 
       for (let r = 1; r < 12; r++) {
         const timeDiv = document.createElement('div');
@@ -568,12 +564,11 @@
           
           const select = document.createElement('select');
           select.innerHTML = optionsHtml;
-          const val = state.schedule[r] ? (state.schedule[r][c] || 'нет урока') : 'нет урока';
+          const val = state.schedule[r] ? String(state.schedule[r][c] || 'нет урока').trim() : 'нет урока';
           select.value = val;
           
-          // Закрашиваем ячейку, если выбран предмет
           if (val !== 'нет урока') {
-            const subjObj = state.subjects.find(s => `${s.name} ${s.className}` === val);
+            const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
             if (subjObj) {
               cell.classList.add(getBgClass(subjObj.name));
             }
@@ -583,16 +578,15 @@
             if (!state.schedule[r]) state.schedule[r] = [];
             state.schedule[r][c] = e.target.value;
             
-            // Перекрашиваем ячейку
-            cell.className = 'schedule-cell'; // сброс
+            cell.className = 'schedule-cell';
             if (e.target.value !== 'нет урока') {
-              const subjObj = state.subjects.find(s => `${s.name} ${s.className}` === e.target.value);
+              const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === e.target.value);
               if (subjObj) cell.classList.add(getBgClass(subjObj.name));
             }
             
             markDirty();
-            calculateHours(); // Пересчёт часов при изменении расписания
-            renderSidebar(); // Обновление цифр в сайдбаре
+            calculateHours();
+            renderSidebar();
             applyFilters();
           });
           
@@ -613,14 +607,14 @@
     }
 
     function highlightCells(subj, cls) {
-      const target = `${subj} ${cls}`.trim();
+      const target = `${subj} ${String(cls)}`.trim();
       document.querySelectorAll('.schedule-cell select').forEach(sel => {
         if (sel.value === target) sel.parentElement.classList.add('highlight');
       });
       document.querySelectorAll('.sidebar-item').forEach(item => {
         const sName = item.querySelector('.subject-select').value;
-        const cName = item.querySelector('.class-select').value;
-        if (sName === subj && cName === cls) {
+        const cName = String(item.querySelector('.class-select').value);
+        if (sName === subj && cName === String(cls).trim()) {
           item.classList.add('highlight');
         }
       });
@@ -689,7 +683,6 @@
           state.isDirty = false;
           btn.style.display = 'none';
           btn.textContent = '💾 Сохранить изменения';
-          // Уведомление убрано по требованию
         }
       } catch (e) {
         alert('Ошибка сохранения: ' + e.message);
