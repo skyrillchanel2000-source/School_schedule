@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Расписание учительницы</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="menuToggle" class="menu-btn" aria-label="Меню">☰</button>
+    <div class="topbar-title">Расписание</div>
+    <div class="topbar-controls">
+      <select id="scheduleMode">
+        <option value="permanent">Постоянное</option>
+        <option value="current" selected>Фактическое (эта неделя)</option>
+        <option value="next">Следующая неделя</option>
+      </select>
+      <button id="resetBtn">Сбросить фактическое к постоянному</button>
+      <button id="newWeekBtn">Начать новую неделю</button>
+      <button id="saveTopBtn" class="save-btn" style="display:none;">Сохранить</button>
+    </div>
+  </header>
+
+  <div class="main-wrapper">
+    <!-- Расписание -->
+    <main class="schedule-container">
+      <div class="filters">
+        <div class="day-filter">
+          <span>День:</span>
+          <button data-day="all" class="day-btn active">Все</button>
+          <button data-day="0" class="day-btn">Пн</button>
+          <button data-day="1" class="day-btn">Вт</button>
+          <button data-day="2" class="day-btn">Ср</button>
+          <button data-day="3" class="day-btn">Чт</button>
+          <button data-day="4" class="day-btn">Пт</button>
+          <button data-day="5" class="day-btn">Сб</button>
+        </div>
+        <div class="class-filter">
+          <span>Класс:</span>
+          <select id="classFilter">
+            <option value="">Все</option>
+          </select>
+          <span id="classHoursInfo" class="hours-info"></span>
+        </div>
+      </div>
+
+      <div class="schedule-wrapper" id="scheduleWrapper">
+        <!-- Сетка расписания будет построена JS -->
+      </div>
+    </main>
+
+    <!-- Правая панель: предметы + классы -->
+    <aside class="side-panel" id="sidePanel">
+      <div class="panel-header">
+        <h3>Предметы и классы</h3>
+        <button id="closePanel" class="close-panel-btn">✕</button>
+      </div>
+      <div class="items-list" id="itemsList">
+        <!-- Строки предметов будут здесь -->
+      </div>
+      <button id="addItemBtn" class="add-btn">+</button>
+      <button id="saveSideBtn" class="save-btn" style="display:none; margin-top:10px;">Сохранить</button>
+      <div class="help-text">
+        <p>• Выберите предмет и класс для строки.</p>
+        <p>• «Свой предмет» добавляется автоматически.</p>
+        <p>• Часы считаются автоматически по расписанию.</p>
+      </div>
+    </aside>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
