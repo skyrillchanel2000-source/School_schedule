@@ -13,7 +13,8 @@
       --russian: #a4c2f4;
       --literature: #ffe599;
       --new: #ffd966;
-      --highlight: #fff3cd;
+      --highlight-border: #ff9800;
+      --highlight-shadow: rgba(255, 152, 0, 0.5);
     }
     body {
       font-family: 'Times New Roman', Times, serif;
@@ -50,7 +51,6 @@
     }
     button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(92, 107, 192, 0.3); }
     button.secondary { background: #90a4ae; }
-    button.danger { background: #ef5350; }
 
     .container {
       display: flex;
@@ -62,7 +62,7 @@
     }
 
     .sidebar {
-      width: 320px;
+      width: 340px;
       flex-shrink: 0;
       background: var(--card);
       padding: 20px;
@@ -73,39 +73,64 @@
 
     .sidebar-item {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 8px;
-      padding: 10px;
+      padding: 12px;
       border-radius: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       border: 1px solid rgba(0,0,0,0.05);
       transition: all 0.2s;
     }
     .sidebar-item:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .sidebar-item.highlight { border: 2px solid #ff9800; transform: scale(1.03); z-index: 10; }
+    
+    .sidebar-item.highlight { 
+      border: 3px solid var(--highlight-border) !important; 
+      box-shadow: 0 0 15px var(--highlight-shadow);
+      transform: scale(1.03); 
+      z-index: 10; 
+    }
     
     .subj-russian { background-color: var(--russian); }
     .subj-literature { background-color: var(--literature); }
     .subj-new { background-color: var(--new); }
 
-    .sidebar-item select, .sidebar-item input {
+    .sidebar-row { display: flex; gap: 8px; align-items: center; }
+    
+    .sidebar-item select {
       font-family: inherit;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.15);
       border-radius: 6px;
-      padding: 4px;
-      background: rgba(255,255,255,0.7);
+      padding: 6px;
+      background: rgba(255,255,255,0.8);
+      flex-grow: 1;
+      font-size: 14px;
     }
-    .hours-display { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: bold; }
-    .hours-display input { width: 35px; text-align: center; }
-    .delete-btn { background: transparent; color: #d32f2f; padding: 4px 8px; font-size: 18px; }
+    
+    .hours-display { 
+      font-size: 14px; 
+      font-weight: bold; 
+      background: rgba(255,255,255,0.6);
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 4px;
+    }
+    
+    .delete-btn { 
+      background: transparent; 
+      color: #d32f2f; 
+      padding: 6px; 
+      font-size: 18px; 
+      flex-shrink: 0;
+    }
     .delete-btn:hover { background: rgba(211, 47, 47, 0.1); box-shadow: none; }
 
     .add-row-btn {
       width: 100%;
       margin-top: 10px;
       background: #81c784;
-      font-size: 20px;
-      padding: 8px;
+      font-size: 18px;
+      padding: 10px;
     }
 
     .main-content { flex-grow: 1; min-width: 0; }
@@ -153,20 +178,25 @@
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       padding: 4px;
-      min-height: 65px;
+      min-height: 70px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
     }
-    .schedule-cell:hover { border-color: var(--primary); }
+    
+    /* Цвета ячеек расписания */
+    .schedule-cell.bg-russian { background-color: var(--russian); }
+    .schedule-cell.bg-literature { background-color: var(--literature); }
+    .schedule-cell.bg-new { background-color: var(--new); }
+
     .schedule-cell.highlight {
-      background-color: var(--highlight) !important;
-      border-color: #ffc107;
-      transform: scale(1.03);
-      z-index: 10;
-      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+      border: 3px solid var(--highlight-border) !important;
+      box-shadow: 0 0 15px var(--highlight-shadow);
+      transform: scale(1.05);
+      z-index: 20;
     }
+    
     .schedule-cell.filtered-out {
       opacity: 0.15;
       filter: grayscale(100%);
@@ -183,6 +213,7 @@
       text-align: center;
       cursor: pointer;
       outline: none;
+      font-weight: 500;
     }
 
     .time-cell {
@@ -257,7 +288,7 @@
     <h1>📚 Расписание</h1>
     <div class="controls">
       <select id="modeSelect" style="padding: 8px; border-radius: 8px; font-family: inherit; font-size: 15px;">
-        <option value="actual">Фактическое (эта неделя)</option>
+        <option value="actual">Текущая неделя</option>
         <option value="permanent">Постоянное</option>
         <option value="nextWeek">Следующая неделя</option>
       </select>
@@ -304,7 +335,7 @@
   <button class="save-btn" id="saveBtn" onclick="saveData()">💾 Сохранить изменения</button>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwwEvaf9QRYQ4Iu540j81GBLHsuAXWErR8aLDHKnL82Yiu_frJimOb1T8nJ5oYNBtC8ZQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwJM0N5aB1YOF38gRuDbTqBIoYc1v2JuvpBRRz2a7dSGgMGOy2Akl9JYTkZZQ5ZRiUd0w/exec";
     
     const times = [
       "0<br><small>8:00-8:30</small>", "1<br><small>8:30-9:10</small>", "2<br><small>9:20-10:00</small>",
@@ -315,6 +346,9 @@
 
     let state = {
       subjects: [],
+      permanent: [],
+      actual: [],
+      nextWeek: [],
       schedule: [],
       mode: 'actual',
       isDirty: false
@@ -326,20 +360,47 @@
       return 'subj-new';
     }
 
+    function getBgClass(name) {
+      if (name.includes('Русский')) return 'bg-russian';
+      if (name.includes('Литератур')) return 'bg-literature';
+      return 'bg-new';
+    }
+
+    function getUniqueSubjects() {
+      return [...new Set(state.subjects.map(s => s.name))];
+    }
+
+    function getUniqueClasses() {
+      return [...new Set(state.subjects.map(s => s.className).filter(c => c && c.trim() !== ''))].sort();
+    }
+
     async function loadData() {
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
         
-        state.subjects = data.subjects.map((row, i) => ({
-          id: i,
-          name: row[0] || 'Русский язык',
-          className: row[1] || '5',
-          fact: row[2] || 0,
-          plan: row[3] || 0
-        }));
+        // Если таблица пуста, создаём дефолтные значения
+        if (!data.subjects || data.subjects.length === 0) {
+          state.subjects = [
+            { id: 1, name: 'Русский язык', className: '', plan: 0, fact: 0 },
+            { id: 2, name: 'Литература', className: '', plan: 0, fact: 0 }
+          ];
+        } else {
+          state.subjects = data.subjects.map((row, i) => ({
+            id: i,
+            name: row[0] || 'Русский язык',
+            className: row[1] || '',
+            plan: 0, // Будет пересчитано
+            fact: 0  // Будет пересчитано
+          }));
+        }
         
-        state.schedule = data[state.mode] || data.actual;
+        state.permanent = data.permanent || [];
+        state.actual = data.actual || [];
+        state.nextWeek = data.nextWeek || [];
+        state.schedule = state[state.mode] || [];
+        
+        calculateHours();
         renderSidebar();
         renderSchedule();
         populateClassFilter();
@@ -349,32 +410,64 @@
       }
     }
 
+    function calculateHours() {
+      // Сброс
+      state.subjects.forEach(s => { s.plan = 0; s.fact = 0; });
+
+      const countInGrid = (grid, type) => {
+        if (!grid) return;
+        // grid - это массив строк. Пропускаем 0-ю строку (заголовки)
+        for (let r = 1; r < grid.length; r++) {
+          for (let c = 1; c < grid[r].length; c++) { // Пропускаем 0-й столбец (время)
+            const val = grid[r][c];
+            if (!val || val === 'нет урока') continue;
+            
+            const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val.trim());
+            if (match) {
+              match[type]++;
+            }
+          }
+        }
+      };
+
+      countInGrid(state.permanent, 'plan');
+      countInGrid(state.actual, 'fact');
+    }
+
     function renderSidebar() {
       const list = document.getElementById('sidebarList');
       list.innerHTML = '';
+      
+      const uniqueSubj = getUniqueSubjects();
+      const uniqueCls = getUniqueClasses();
+
       state.subjects.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = `sidebar-item ${getSubjectClass(item.name)}`;
         div.dataset.id = item.id;
+        
+        // Формируем опции предметов
+        let subjOptions = uniqueSubj.map(s => `<option value="${s}" ${item.name === s ? 'selected' : ''}>${s}</option>`).join('');
+        subjOptions += `<option value="new">+ Добавить предмет</option>`;
+
+        // Формируем опции классов
+        let classOptions = `<option value="">-- нет --</option>`;
+        classOptions += uniqueCls.map(c => `<option value="${c}" ${item.className === c ? 'selected' : ''}>${c}</option>`).join('');
+        classOptions += `<option value="new">+ Добавить класс</option>`;
+
         div.innerHTML = `
-          <select class="subject-select" onchange="handleSubjectChange(this, ${index})">
-            <option value="Русский язык" ${item.name === 'Русский язык' ? 'selected' : ''}>Русский язык</option>
-            <option value="Литература" ${item.name === 'Литература' ? 'selected' : ''}>Литература</option>
-            <option value="new">+ Добавить предмет</option>
-          </select>
-          <select class="class-select" onchange="handleClassChange(this, ${index})">
-            ${['5','6','7','8','9'].map(c => `<option value="${c}" ${item.className === c ? 'selected' : ''}>${c}</option>`).join('')}
-            <option value="new">+ Добавить класс</option>
-          </select>
-          <div class="hours-display">
-            <input type="number" class="fact-hours" value="${item.fact}" min="0" onchange="updateHours(${index}, 'fact', this.value)">
-            <span>/</span>
-            <input type="number" class="plan-hours" value="${item.plan}" min="0" onchange="updateHours(${index}, 'plan', this.value)">
+          <div class="sidebar-row">
+            <select class="subject-select" onchange="handleSubjectChange(this, ${index})">${subjOptions}</select>
+            <button class="delete-btn" onclick="deleteItem(${index})">🗑️</button>
           </div>
-          <button class="delete-btn" onclick="deleteItem(${index})">🗑️</button>
+          <div class="sidebar-row">
+            <select class="class-select" onchange="handleClassChange(this, ${index})">${classOptions}</select>
+          </div>
+          <div class="hours-display">
+            Часов: Факт <b>${item.fact}</b> / План <b>${item.plan}</b>
+          </div>
         `;
         
-        // Hover highlighting
         div.addEventListener('mouseenter', () => highlightCells(item.name, item.className));
         div.addEventListener('mouseleave', clearHighlight);
         
@@ -386,56 +479,64 @@
       if (select.value === 'new') {
         const newName = prompt('Введите название нового предмета:');
         if (newName && newName.trim()) {
-          const opt = document.createElement('option');
-          opt.value = newName; opt.textContent = newName;
-          select.insertBefore(opt, select.lastElementChild);
-          select.value = newName;
-          state.subjects[index].name = newName;
-          markDirty();
-          renderSidebar(); renderSchedule();
+          state.subjects[index].name = newName.trim();
+          markDirty(); 
+          calculateHours();
+          renderSidebar(); 
+          renderSchedule();
         } else {
           select.value = state.subjects[index].name;
         }
       } else {
         state.subjects[index].name = select.value;
-        markDirty(); renderSidebar(); renderSchedule();
+        markDirty(); 
+        calculateHours();
+        renderSidebar(); 
+        renderSchedule();
       }
     }
 
     function handleClassChange(select, index) {
       if (select.value === 'new') {
-        const newClass = prompt('Введите номер класса:');
+        const newClass = prompt('Введите номер класса (например, 5в, 6б):');
         if (newClass && newClass.trim()) {
-          const opt = document.createElement('option');
-          opt.value = newClass; opt.textContent = newClass;
-          select.insertBefore(opt, select.lastElementChild);
-          select.value = newClass;
-          state.subjects[index].className = newClass;
-          markDirty(); renderSidebar(); renderSchedule(); populateClassFilter();
+          state.subjects[index].className = newClass.trim();
+          markDirty(); 
+          calculateHours();
+          renderSidebar(); 
+          renderSchedule(); 
+          populateClassFilter();
         } else {
           select.value = state.subjects[index].className;
         }
       } else {
         state.subjects[index].className = select.value;
-        markDirty(); renderSidebar(); renderSchedule(); populateClassFilter();
+        markDirty(); 
+        calculateHours();
+        renderSidebar(); 
+        renderSchedule(); 
+        populateClassFilter();
       }
-    }
-
-    function updateHours(index, type, value) {
-      state.subjects[index][type] = parseInt(value) || 0;
-      markDirty();
     }
 
     function deleteItem(index) {
       if (confirm('Удалить эту строку?')) {
         state.subjects.splice(index, 1);
-        markDirty(); renderSidebar(); renderSchedule(); populateClassFilter();
+        markDirty(); 
+        calculateHours();
+        renderSidebar(); 
+        renderSchedule(); 
+        populateClassFilter();
       }
     }
 
     function addSidebarItem() {
-      state.subjects.push({ id: Date.now(), name: 'Русский язык', className: '5', fact: 0, plan: 0 });
-      markDirty(); renderSidebar(); renderSchedule(); populateClassFilter();
+      state.subjects.push({ id: Date.now(), name: 'Русский язык', className: '', plan: 0, fact: 0 });
+      markDirty(); 
+      calculateHours();
+      renderSidebar(); 
+      renderSchedule(); 
+      populateClassFilter();
     }
 
     function renderSchedule() {
@@ -452,10 +553,9 @@
       });
 
       const optionsHtml = `<option value="нет урока">нет урока</option>` + 
-        state.subjects.map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
+        state.subjects.filter(s => s.className).map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
 
       for (let r = 1; r < 12; r++) {
-        // Time column
         const timeDiv = document.createElement('div');
         timeDiv.className = 'time-cell';
         timeDiv.innerHTML = times[r-1];
@@ -468,19 +568,39 @@
           
           const select = document.createElement('select');
           select.innerHTML = optionsHtml;
-          select.value = state.schedule[r][c] || 'нет урока';
+          const val = state.schedule[r] ? (state.schedule[r][c] || 'нет урока') : 'нет урока';
+          select.value = val;
+          
+          // Закрашиваем ячейку, если выбран предмет
+          if (val !== 'нет урока') {
+            const subjObj = state.subjects.find(s => `${s.name} ${s.className}` === val);
+            if (subjObj) {
+              cell.classList.add(getBgClass(subjObj.name));
+            }
+          }
           
           select.addEventListener('change', (e) => {
+            if (!state.schedule[r]) state.schedule[r] = [];
             state.schedule[r][c] = e.target.value;
+            
+            // Перекрашиваем ячейку
+            cell.className = 'schedule-cell'; // сброс
+            if (e.target.value !== 'нет урока') {
+              const subjObj = state.subjects.find(s => `${s.name} ${s.className}` === e.target.value);
+              if (subjObj) cell.classList.add(getBgClass(subjObj.name));
+            }
+            
             markDirty();
-            applyFilters(); // Update counts
+            calculateHours(); // Пересчёт часов при изменении расписания
+            renderSidebar(); // Обновление цифр в сайдбаре
+            applyFilters();
           });
           
-          // Hover highlighting
           select.addEventListener('mouseenter', () => {
             if (select.value !== 'нет урока') {
-              const [subj, ...clsParts] = select.value.split(' ');
-              highlightCells(subj, clsParts.join(' '));
+              const parts = select.value.split(' ');
+              const cls = parts.slice(1).join(' ');
+              highlightCells(parts[0], cls);
             }
           });
           select.addEventListener('mouseleave', clearHighlight);
@@ -493,13 +613,14 @@
     }
 
     function highlightCells(subj, cls) {
-      const target = `${subj} ${cls}`;
+      const target = `${subj} ${cls}`.trim();
       document.querySelectorAll('.schedule-cell select').forEach(sel => {
         if (sel.value === target) sel.parentElement.classList.add('highlight');
       });
       document.querySelectorAll('.sidebar-item').forEach(item => {
-        if (item.querySelector('.subject-select').value === subj && 
-            item.querySelector('.class-select').value === cls) {
+        const sName = item.querySelector('.subject-select').value;
+        const cName = item.querySelector('.class-select').value;
+        if (sName === subj && cName === cls) {
           item.classList.add('highlight');
         }
       });
@@ -512,7 +633,7 @@
     function populateClassFilter() {
       const select = document.getElementById('classFilter');
       const currentVal = select.value;
-      const classes = [...new Set(state.subjects.map(s => s.className))].sort();
+      const classes = getUniqueClasses();
       select.innerHTML = '<option value="all">Все классы</option>' + 
         classes.map(c => `<option value="${c}">${c}</option>`).join('');
       select.value = classes.includes(currentVal) ? currentVal : 'all';
@@ -535,7 +656,6 @@
         }
 
         cell.classList.toggle('filtered-out', !isMatch);
-        cell.classList.toggle('filtered-in', isMatch);
       });
 
       document.querySelectorAll('.grid-header').forEach(header => {
@@ -545,7 +665,7 @@
       });
 
       document.getElementById('classHoursCount').textContent = 
-        classFilter !== 'all' ? `Часов у класса ${classFilter}: ${count}` : '';
+        classFilter !== 'all' ? `Уроков у класса ${classFilter}: ${count}` : '';
     }
 
     function markDirty() {
@@ -569,10 +689,11 @@
           state.isDirty = false;
           btn.style.display = 'none';
           btn.textContent = '💾 Сохранить изменения';
-          alert('Данные успешно сохранены!');
+          // Уведомление убрано по требованию
         }
       } catch (e) {
         alert('Ошибка сохранения: ' + e.message);
+        btn.textContent = '💾 Сохранить изменения';
       }
     }
 
@@ -582,7 +703,6 @@
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type }) });
         const data = await res.json();
         if (data.status === 'success') {
-          alert('Команда выполнена успешно!');
           loadData();
         }
       } catch (e) {
@@ -596,7 +716,10 @@
         return;
       }
       state.mode = e.target.value;
-      loadData();
+      state.schedule = state[state.mode] || [];
+      renderSchedule();
+      calculateHours();
+      renderSidebar();
     });
 
     function toggleSidebar() {
