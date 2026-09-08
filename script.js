@@ -1,7 +1,7 @@
 // =========================
 // КОНФИГУРАЦИЯ
 // =========================
-const API_URL = "https://script.google.com/macros/s/AKfycbxAWnt-UJf1uLVQrkofnYOdjynE1Dg40KRA_2z4_aCO4KKtAQoQQGyEGBKTaDEZzGrXgQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyKduchCK3MbOG8osJs04pxD4cSWD4t-IS9gbETtskvOjwJMi1jLMdAl1r8JwOd0cI0sA/exec";
 
 // =========================
 // СОСТОЯНИЕ
