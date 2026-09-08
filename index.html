@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Расписание учителя</title>
   <style>
     :root {
@@ -16,6 +16,9 @@
       --highlight-border: #ff9800;
       --highlight-shadow: rgba(255, 152, 0, 0.4);
     }
+    * {
+      touch-action: manipulation; /* Убирает задержку и двойной тап для зума на мобильных */
+    }
     body {
       font-family: 'Times New Roman', Times, serif;
       background-color: var(--bg);
@@ -23,46 +26,51 @@
       margin: 0;
       padding: 0;
       line-height: 1.4;
+      -webkit-text-size-adjust: 100%;
     }
     .header {
       background: var(--card);
-      padding: 12px 20px;
+      padding: 12px 16px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 12px;
       align-items: center;
       justify-content: space-between;
     }
-    .header h1 { margin: 0; font-size: 22px; color: var(--primary); }
-    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .header h1 { margin: 0; font-size: 20px; color: var(--primary); }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     
-    button {
+    button, select, input {
       font-family: 'Times New Roman', Times, serif;
+      font-size: 16px; /* 16px предотвращает авто-зум на iOS при фокусе */
+    }
+
+    button {
       font-weight: bold;
       border: none;
       border-radius: 6px;
-      padding: 6px 14px;
+      padding: 8px 14px;
       cursor: pointer;
       transition: background 0.2s, box-shadow 0.2s;
       background: var(--primary);
       color: white;
-      font-size: 14px;
     }
     button:hover { box-shadow: 0 3px 8px rgba(92, 107, 192, 0.3); }
+    button:active { transform: scale(0.98); }
     button.secondary { background: #90a4ae; }
 
     .container {
       display: flex;
-      gap: 20px;
-      padding: 20px;
+      gap: 16px;
+      padding: 16px;
       max-width: 1400px;
       margin: 0 auto;
       align-items: flex-start;
     }
 
     .sidebar {
-      width: 340px;
+      width: 320px;
       flex-shrink: 0;
       background: var(--card);
       padding: 16px;
@@ -75,15 +83,13 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: 8px 10px;
+      padding: 10px;
       border-radius: 8px;
       margin-bottom: 8px;
       border: 1px solid rgba(0,0,0,0.06);
-      transition: box-shadow 0.2s, border-color 0.2s; /* Убран transform из transition */
+      transition: box-shadow 0.2s, border-color 0.2s;
     }
-    .sidebar-item:hover {
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+    .sidebar-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .sidebar-item.highlight { 
       border: 2px solid var(--highlight-border) !important; 
       box-shadow: 0 0 10px var(--highlight-shadow);
@@ -94,29 +100,23 @@
     .subj-literature { background-color: var(--literature); }
     .subj-new { background-color: var(--new); }
 
-    .sidebar-top-row { 
-      display: flex; 
-      gap: 6px; 
-      align-items: center; 
-    }
+    .sidebar-top-row { display: flex; gap: 6px; align-items: center; }
     
     .sidebar-item select {
-      font-family: inherit;
       border: 1px solid rgba(0,0,0,0.15);
       border-radius: 5px;
-      padding: 5px 6px;
+      padding: 6px;
       background: rgba(255,255,255,0.85);
-      font-size: 14px;
-      outline: none;
+      flex-grow: 1;
     }
-    .sidebar-top-row .subject-select { flex: 2; min-width: 0; }
-    .sidebar-top-row .class-select { flex: 1; min-width: 65px; }
+    .sidebar-top-row .subject-select { flex: 2; }
+    .sidebar-top-row .class-select { flex: 1; min-width: 70px; }
     
     .hours-display { 
-      font-size: 13px; 
+      font-size: 14px; 
       font-weight: bold; 
       background: rgba(255,255,255,0.6);
-      padding: 4px 8px;
+      padding: 6px 8px;
       border-radius: 5px;
       text-align: center;
       border: 1px solid rgba(0,0,0,0.05);
@@ -125,19 +125,18 @@
     .delete-btn { 
       background: transparent; 
       color: #d32f2f; 
-      padding: 4px 6px; 
-      font-size: 16px; 
+      padding: 6px; 
+      font-size: 18px; 
       flex-shrink: 0;
       border-radius: 4px;
     }
-    .delete-btn:hover { background: rgba(211, 47, 47, 0.1); box-shadow: none; }
+    .delete-btn:hover { background: rgba(211, 47, 47, 0.1); }
 
     .add-row-btn {
       width: 100%;
       margin-top: 8px;
       background: #81c784;
-      font-size: 16px;
-      padding: 8px;
+      padding: 10px;
       border-radius: 6px;
     }
 
@@ -149,12 +148,12 @@
       border-radius: 10px;
       margin-bottom: 15px;
       display: flex;
-      gap: 15px;
+      gap: 12px;
       align-items: center;
       flex-wrap: wrap;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-    .filters select { padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; }
+    .filters select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
     .hours-count { font-weight: bold; color: var(--primary); margin-left: auto; font-size: 15px; }
 
     .schedule-wrapper {
@@ -163,13 +162,14 @@
       border-radius: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.06);
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
     }
 
     .schedule-grid {
       display: grid;
-      grid-template-columns: 100px repeat(6, 1fr);
+      grid-template-columns: 90px repeat(6, minmax(100px, 1fr));
       gap: 6px;
-      min-width: 750px;
+      min-width: 750px; /* Гарантирует горизонтальный скролл на телефоне, а не сжатие */
     }
 
     .grid-header {
@@ -185,12 +185,14 @@
       background: #fafafa;
       border: 1px solid #e0e0e0;
       border-radius: 6px;
-      padding: 2px;
-      min-height: 48px; /* Уменьшенная высота ячейки */
+      padding: 4px;
+      min-height: 52px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: box-shadow 0.2s, border-color 0.2s; /* Убран transform */
+      cursor: pointer;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      position: relative;
     }
     
     .schedule-cell.bg-russian { background-color: var(--russian); }
@@ -209,18 +211,31 @@
       pointer-events: none;
     }
 
-    .schedule-cell select {
+    .cell-display {
+      width: 100%;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      pointer-events: none; /* Чтобы клик проходил сквозь текст на ячейку */
+    }
+
+    .cell-select {
+      display: none;
       width: 100%;
       height: 100%;
       border: none;
       background: transparent;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 14px;
+      font-size: 16px; /* Важно для iOS */
       text-align: center;
-      cursor: pointer;
       outline: none;
       font-weight: 500;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
     }
+    
+    .schedule-cell.editing .cell-display { display: none; }
+    .schedule-cell.editing .cell-select { display: block; }
 
     .time-cell {
       font-weight: bold;
@@ -236,9 +251,9 @@
 
     .save-btn {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
-      padding: 14px 28px;
+      bottom: 20px;
+      right: 20px;
+      padding: 14px 24px;
       font-size: 16px;
       border-radius: 50px;
       background: #4caf50;
@@ -250,41 +265,32 @@
     }
     .save-btn:hover { background: #43a047; }
 
-    .menu-toggle {
-      display: none;
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      z-index: 1002;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      font-size: 22px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
+    .menu-toggle { display: none; } /* Скрыт на всех устройствах, так как сайдбар теперь внизу на мобильных */
 
     @keyframes popIn {
       from { transform: scale(0.8); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
 
+    /* Мобильная адаптация */
     @media (max-width: 900px) {
-      .container { flex-direction: column; }
-      .sidebar {
-        position: fixed;
-        right: -100%;
-        top: 0;
-        width: 85%;
-        max-width: 350px;
-        height: 100vh;
-        z-index: 1001;
-        border-radius: 0;
-        transition: right 0.3s ease;
-        overflow-y: auto;
+      .container {
+        flex-direction: column;
+        padding: 12px;
       }
-      .sidebar.open { right: 0; }
-      .menu-toggle { display: flex; align-items: center; justify-content: center; }
-      .save-btn { bottom: 100px; }
+      .sidebar {
+        width: 100%;
+        max-width: 100%;
+        margin-top: 20px;
+        order: 2; /* Гарантирует, что сайдбар будет ПОД расписанием */
+      }
+      .main-content {
+        order: 1;
+        width: 100%;
+      }
+      .header h1 { font-size: 18px; }
+      .controls button { padding: 6px 10px; font-size: 13px; }
+      .schedule-cell { min-height: 56px; } /* Чуть выше для удобного тапа пальцем */
     }
   </style>
 </head>
@@ -293,13 +299,13 @@
   <div class="header">
     <h1>📚 Расписание</h1>
     <div class="controls">
-      <select id="modeSelect" style="padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 14px;">
+      <select id="modeSelect" style="padding: 6px 10px; border-radius: 6px;">
         <option value="actual">Текущая неделя</option>
         <option value="permanent">Постоянное</option>
         <option value="nextWeek">Следующая неделя</option>
       </select>
-      <button class="secondary" onclick="sendCommand('resetActual')">Сбросить факт к постоянному</button>
-      <button class="secondary" onclick="sendCommand('startNewWeek')">Начать новую неделю</button>
+      <button class="secondary" onclick="sendCommand('resetActual')">Сбросить факт</button>
+      <button class="secondary" onclick="sendCommand('startNewWeek')">Новая неделя</button>
     </div>
   </div>
 
@@ -337,7 +343,6 @@
     </div>
   </div>
 
-  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
   <button class="save-btn" id="saveBtn" onclick="saveData()">💾 Сохранить изменения</button>
 
   <script>
@@ -359,6 +364,8 @@
       mode: 'actual',
       isDirty: false
     };
+
+    let activeHighlightTarget = null;
 
     function getSubjectClass(name) {
       if (name.includes('Русский')) return 'subj-russian';
@@ -410,29 +417,24 @@
         renderSchedule();
         populateClassFilter();
       } catch (e) {
-        alert('Ошибка загрузки данных. Проверьте консоль и имя листа в скрипте.');
+        alert('Ошибка загрузки данных. Проверьте имя листа в скрипте.');
         console.error(e);
       }
     }
 
     function calculateHours() {
       state.subjects.forEach(s => { s.plan = 0; s.fact = 0; });
-
       const countInGrid = (grid, type) => {
         if (!grid) return;
         for (let r = 1; r < grid.length; r++) {
           for (let c = 1; c < grid[r].length; c++) {
             const val = String(grid[r][c] || '').trim();
             if (!val || val === 'нет урока') continue;
-            
             const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
-            if (match) {
-              match[type]++;
-            }
+            if (match) match[type]++;
           }
         }
       };
-
       countInGrid(state.permanent, 'plan');
       countInGrid(state.actual, 'fact');
     }
@@ -440,14 +442,12 @@
     function renderSidebar() {
       const list = document.getElementById('sidebarList');
       list.innerHTML = '';
-      
       const uniqueSubj = getUniqueSubjects();
       const uniqueCls = getUniqueClasses();
 
       state.subjects.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = `sidebar-item ${getSubjectClass(item.name)}`;
-        div.dataset.id = item.id;
         
         let subjOptions = uniqueSubj.map(s => `<option value="${s}" ${item.name === s ? 'selected' : ''}>${s}</option>`).join('');
         subjOptions += `<option value="new">+ Предмет</option>`;
@@ -456,18 +456,16 @@
         classOptions += uniqueCls.map(c => `<option value="${c}" ${String(item.className) === c ? 'selected' : ''}>${c}</option>`).join('');
         classOptions += `<option value="new">+ Класс</option>`;
 
-        // Обновлённая структура: Предмет и Класс в одной строке, Часы в следующей
         div.innerHTML = `
           <div class="sidebar-top-row">
             <select class="subject-select" onchange="handleSubjectChange(this, ${index})">${subjOptions}</select>
             <select class="class-select" onchange="handleClassChange(this, ${index})">${classOptions}</select>
-            <button class="delete-btn" onclick="deleteItem(${index})" title="Удалить">🗑️</button>
+            <button class="delete-btn" onclick="deleteItem(${index})">🗑️</button>
           </div>
-          <div class="hours-display">
-            Часов: Факт <b>${item.fact}</b> / План <b>${item.plan}</b>
-          </div>
+          <div class="hours-display">Часов: Факт <b>${item.fact}</b> / План <b>${item.plan}</b></div>
         `;
         
+        // Hover для десктопа
         div.addEventListener('mouseenter', () => highlightCells(item.name, item.className));
         div.addEventListener('mouseleave', clearHighlight);
         
@@ -477,66 +475,40 @@
 
     function handleSubjectChange(select, index) {
       if (select.value === 'new') {
-        const newName = prompt('Введите название нового предмета:');
+        const newName = prompt('Название нового предмета:');
         if (newName && newName.trim()) {
           state.subjects[index].name = newName.trim();
-          markDirty(); 
-          calculateHours();
-          renderSidebar(); 
-          renderSchedule();
-        } else {
-          select.value = state.subjects[index].name;
-        }
+          markDirty(); calculateHours(); renderSidebar(); renderSchedule();
+        } else { select.value = state.subjects[index].name; }
       } else {
         state.subjects[index].name = select.value;
-        markDirty(); 
-        calculateHours();
-        renderSidebar(); 
-        renderSchedule();
+        markDirty(); calculateHours(); renderSidebar(); renderSchedule();
       }
     }
 
     function handleClassChange(select, index) {
       if (select.value === 'new') {
-        const newClass = prompt('Введите номер класса (например, 5в, 6б):');
+        const newClass = prompt('Номер класса (например, 5в):');
         if (newClass && newClass.trim()) {
           state.subjects[index].className = newClass.trim();
-          markDirty(); 
-          calculateHours();
-          renderSidebar(); 
-          renderSchedule(); 
-          populateClassFilter();
-        } else {
-          select.value = state.subjects[index].className;
-        }
+          markDirty(); calculateHours(); renderSidebar(); renderSchedule(); populateClassFilter();
+        } else { select.value = state.subjects[index].className; }
       } else {
         state.subjects[index].className = String(select.value);
-        markDirty(); 
-        calculateHours();
-        renderSidebar(); 
-        renderSchedule(); 
-        populateClassFilter();
+        markDirty(); calculateHours(); renderSidebar(); renderSchedule(); populateClassFilter();
       }
     }
 
     function deleteItem(index) {
       if (confirm('Удалить эту строку?')) {
         state.subjects.splice(index, 1);
-        markDirty(); 
-        calculateHours();
-        renderSidebar(); 
-        renderSchedule(); 
-        populateClassFilter();
+        markDirty(); calculateHours(); renderSidebar(); renderSchedule(); populateClassFilter();
       }
     }
 
     function addSidebarItem() {
       state.subjects.push({ id: Date.now(), name: 'Русский язык', className: '', plan: 0, fact: 0 });
-      markDirty(); 
-      calculateHours();
-      renderSidebar(); 
-      renderSchedule(); 
-      populateClassFilter();
+      markDirty(); calculateHours(); renderSidebar(); renderSchedule(); populateClassFilter();
     }
 
     function renderSchedule() {
@@ -566,43 +538,74 @@
           cell.className = 'schedule-cell';
           cell.dataset.col = c;
           
-          const select = document.createElement('select');
-          select.innerHTML = optionsHtml;
           const val = state.schedule[r] ? String(state.schedule[r][c] || 'нет урока').trim() : 'нет урока';
+          cell.dataset.value = val;
+
+          const display = document.createElement('span');
+          display.className = 'cell-display';
+          display.textContent = val === 'нет урока' ? '—' : val;
+          
+          const select = document.createElement('select');
+          select.className = 'cell-select';
+          select.innerHTML = optionsHtml;
           select.value = val;
           
           if (val !== 'нет урока') {
             const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
-            if (subjObj) {
-              cell.classList.add(getBgClass(subjObj.name));
-            }
+            if (subjObj) cell.classList.add(getBgClass(subjObj.name));
           }
           
-          select.addEventListener('change', (e) => {
-            if (!state.schedule[r]) state.schedule[r] = [];
-            state.schedule[r][c] = e.target.value;
+          // Логика тапов
+          cell.addEventListener('click', (e) => {
+            // Если клик был по уже открытому select, ничего не делаем, пусть браузер обрабатывает
+            if (cell.classList.contains('editing')) return;
+
+            const currentVal = cell.dataset.value;
             
-            cell.className = 'schedule-cell';
-            if (e.target.value !== 'нет урока') {
-              const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === e.target.value);
+            if (currentVal === 'нет урока' || !currentVal) {
+              enterEditMode(cell, select);
+              return;
+            }
+
+            if (activeHighlightTarget === currentVal) {
+              // Второй тап по выделенному: редактируем
+              enterEditMode(cell, select);
+            } else {
+              // Первый тап: выделяем
+              e.preventDefault(); // Предотвращаем стандартное поведение
+              clearHighlight();
+              activeHighlightTarget = currentVal;
+              const parts = currentVal.split(' ');
+              highlightCells(parts[0], parts.slice(1).join(' '));
+            }
+          });
+
+          select.addEventListener('change', () => {
+            const newVal = select.value;
+            cell.dataset.value = newVal;
+            display.textContent = newVal === 'нет урока' ? '—' : newVal;
+            
+            cell.className = 'schedule-cell'; // Сброс классов
+            cell.classList.remove('editing');
+            select.style.display = 'none';
+            
+            if (newVal !== 'нет урока') {
+              const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === newVal);
               if (subjObj) cell.classList.add(getBgClass(subjObj.name));
             }
+            
+            if (!state.schedule[r]) state.schedule[r] = [];
+            state.schedule[r][c] = newVal;
             
             markDirty();
             calculateHours();
             renderSidebar();
             applyFilters();
+            clearHighlight();
+            activeHighlightTarget = null;
           });
-          
-          select.addEventListener('mouseenter', () => {
-            if (select.value !== 'нет урока') {
-              const parts = select.value.split(' ');
-              const cls = parts.slice(1).join(' ');
-              highlightCells(parts[0], cls);
-            }
-          });
-          select.addEventListener('mouseleave', clearHighlight);
 
+          cell.appendChild(display);
           cell.appendChild(select);
           grid.appendChild(cell);
         }
@@ -610,10 +613,35 @@
       applyFilters();
     }
 
+    function enterEditMode(cell, select) {
+      cell.classList.add('editing');
+      select.style.display = 'block';
+      select.focus();
+      // Для мобильных устройств пытаемся сразу открыть нативный список
+      if ('ontouchstart' in window) {
+        setTimeout(() => {
+          select.click();
+          select.showPicker?.(); // Современный API для открытия select
+        }, 50);
+      }
+    }
+
+    // Сброс выделения и режима редактирования при клике вне ячеек
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.schedule-cell') && !e.target.closest('.sidebar-item')) {
+        clearHighlight();
+        activeHighlightTarget = null;
+        document.querySelectorAll('.schedule-cell.editing').forEach(c => {
+          c.classList.remove('editing');
+          c.querySelector('.cell-select').style.display = 'none';
+        });
+      }
+    });
+
     function highlightCells(subj, cls) {
       const target = `${subj} ${String(cls)}`.trim();
-      document.querySelectorAll('.schedule-cell select').forEach(sel => {
-        if (sel.value === target) sel.parentElement.classList.add('highlight');
+      document.querySelectorAll('.schedule-cell').forEach(cell => {
+        if (cell.dataset.value === target) cell.classList.add('highlight');
       });
       document.querySelectorAll('.sidebar-item').forEach(item => {
         const sName = item.querySelector('.subject-select').value;
@@ -644,7 +672,7 @@
 
       document.querySelectorAll('.schedule-cell').forEach(cell => {
         const col = parseInt(cell.dataset.col);
-        const val = cell.querySelector('select').value;
+        const val = cell.dataset.value;
         let isMatch = true;
 
         if (dayFilter !== 'all' && col !== parseInt(dayFilter)) isMatch = false;
@@ -652,7 +680,6 @@
           if (val.includes(classFilter)) count++;
           else isMatch = false;
         }
-
         cell.classList.toggle('filtered-out', !isMatch);
       });
 
@@ -663,7 +690,7 @@
       });
 
       document.getElementById('classHoursCount').textContent = 
-        classFilter !== 'all' ? `Уроков у класса ${classFilter}: ${count}` : '';
+        classFilter !== 'all' ? `Уроков у ${classFilter}: ${count}` : '';
     }
 
     function markDirty() {
@@ -695,13 +722,11 @@
     }
 
     async function sendCommand(type) {
-      if (!confirm('Вы уверены? Это действие изменит данные в таблице безвозвратно.')) return;
+      if (!confirm('Изменить данные в таблице безвозвратно?')) return;
       try {
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type }) });
         const data = await res.json();
-        if (data.status === 'success') {
-          loadData();
-        }
+        if (data.status === 'success') loadData();
       } catch (e) {
         alert('Ошибка: ' + e.message);
       }
@@ -718,10 +743,6 @@
       calculateHours();
       renderSidebar();
     });
-
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
-    }
 
     // Init
     loadData();
