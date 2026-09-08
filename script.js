@@ -567,8 +567,19 @@ function setupEvents() {
 
 function toggleSaveButtons() {
   const show = hasItemsChanges || hasScheduleChanges;
-  document.getElementById("saveTopBtn").style.display = show ? "inline-block" : "none";
-  document.getElementById("saveSideBtn").style.display = show ? "inline-block" : "none";
+  const saveTop = document.getElementById("saveTopBtn");
+  const saveSide = document.getElementById("saveSideBtn");
+
+  saveTop.style.display = show ? "inline-block" : "none";
+  saveSide.style.display = show ? "inline-block" : "none";
+
+  if (show) {
+    saveTop.classList.add("active");
+    saveSide.classList.add("active");
+  } else {
+    saveTop.classList.remove("active");
+    saveSide.classList.remove("active");
+  }
 }
 
 async function sendAction(action) {
@@ -580,7 +591,6 @@ async function sendAction(action) {
 }
 
 async function saveAll() {
-  // Обновляем часы перед отправкой
   recalcHours();
 
   const payload = {
@@ -593,18 +603,28 @@ async function saveAll() {
     }
   };
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  const result = await res.json();
-  if (result.status === "ok") {
-    hasItemsChanges = false;
-    hasScheduleChanges = false;
-    toggleSaveButtons();
-    alert("Сохранено!");
-  } else {
-    alert("Ошибка сохранения: " + (result.error || "неизвестная"));
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result.status === "ok") {
+      hasItemsChanges = false;
+      hasScheduleChanges = false;
+      toggleSaveButtons();
+      alert("Сохранено!");
+      // Перечитать данные, чтобы убедиться
+      await loadData();
+      currentSchedule = schedules[currentMode];
+      renderSchedule();
+      renderItemsList();
+    } else {
+      alert("Ошибка сохранения: " + (result.error || "неизвестная"));
+    }
+  } catch (err) {
+    alert("Ошибка сети: " + err.message);
   }
 }
