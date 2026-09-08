@@ -81,59 +81,78 @@ function renderItemsList() {
     });
     row.appendChild(trash);
 
-    // Выбор предмета
-    const subjectSelect = document.createElement("select");
-    allSubjects.forEach(subj => {
-      const opt = document.createElement("option");
-      opt.value = subj;
-      opt.textContent = subj;
-      subjectSelect.appendChild(opt);
-    });
-    // Если предмет не из списка, добавляем его
-    if (!allSubjects.includes(item.subject)) {
-      const opt = document.createElement("option");
-      opt.value = item.subject;
-      opt.textContent = item.subject;
-      opt.selected = true;
-      subjectSelect.appendChild(opt);
-    }
-    subjectSelect.value = item.subject;
-    subjectSelect.addEventListener("change", () => {
-      item.subject = subjectSelect.value;
-      hasItemsChanges = true;
-      toggleSaveButtons();
-      recalcHours();
-      renderItemsList();
-      renderSchedule();
-      renderClassFilter();
-    });
-    row.appendChild(subjectSelect);
+      // Поле предмета с возможностью ввода своего значения
+      const subjectInput = document.createElement("input");
+      subjectInput.type = "text";
+      subjectInput.value = item.subject || "";
+      subjectInput.style.flex = "1";
+      subjectInput.style.border = "none";
+      subjectInput.style.background = "transparent";
+      subjectInput.style.fontFamily = "inherit";
+      
+      // datalist для предметов
+      let subjectDatalist = document.getElementById("subjectDatalist");
+      if (!subjectDatalist) {
+        subjectDatalist = document.createElement("datalist");
+        subjectDatalist.id = "subjectDatalist";
+        document.body.appendChild(subjectDatalist);
+      }
+      subjectDatalist.innerHTML = "";
+      allSubjects.forEach(subj => {
+        const opt = document.createElement("option");
+        opt.value = subj;
+        subjectDatalist.appendChild(opt);
+      });
+      
+      subjectInput.setAttribute("list", "subjectDatalist");
+      
+      subjectInput.addEventListener("input", () => {
+        item.subject = subjectInput.value;
+        hasItemsChanges = true;
+        toggleSaveButtons();
+        recalcHours();
+        renderItemsList();
+        renderSchedule();
+        renderClassFilter();
+      });
+      
+      row.appendChild(subjectInput);
 
-    // Выбор класса
-    const classSelect = document.createElement("select");
-    uniqueClasses.forEach(cls => {
-      const opt = document.createElement("option");
-      opt.value = cls;
-      opt.textContent = cls;
-      classSelect.appendChild(opt);
-    });
-    if (!uniqueClasses.includes(item.class)) {
-      const opt = document.createElement("option");
-      opt.value = item.class;
-      opt.textContent = item.class;
-      opt.selected = true;
-      classSelect.appendChild(opt);
-    }
-    classSelect.value = item.class || "";
-    classSelect.addEventListener("change", () => {
-      item.class = classSelect.value;
-      hasItemsChanges = true;
-      toggleSaveButtons();
-      recalcHours();
-      renderSchedule();
-      renderClassFilter();
-    });
-    row.appendChild(classSelect);
+      // Поле класса с возможностью ввода своего значения
+      const classInput = document.createElement("input");
+      classInput.type = "text";
+      classInput.value = item.class || "";
+      classInput.style.flex = "1";
+      classInput.style.border = "none";
+      classInput.style.background = "transparent";
+      classInput.style.fontFamily = "inherit";
+      
+      // datalist для классов
+      let classDatalist = document.getElementById("classDatalist");
+      if (!classDatalist) {
+        classDatalist = document.createElement("datalist");
+        classDatalist.id = "classDatalist";
+        document.body.appendChild(classDatalist);
+      }
+      classDatalist.innerHTML = "";
+      uniqueClasses.forEach(cls => {
+        const opt = document.createElement("option");
+        opt.value = cls;
+        classDatalist.appendChild(opt);
+      });
+      
+      classInput.setAttribute("list", "classDatalist");
+      
+      classInput.addEventListener("input", () => {
+        item.class = classInput.value;
+        hasItemsChanges = true;
+        toggleSaveButtons();
+        recalcHours();
+        renderSchedule();
+        renderClassFilter();
+      });
+      
+      row.appendChild(classInput);
 
     // Часы
     const hoursSpan = document.createElement("span");
