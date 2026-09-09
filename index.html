@@ -16,9 +16,7 @@
       --highlight-border: #ff9800;
       --highlight-shadow: rgba(255, 152, 0, 0.4);
     }
-    * {
-      touch-action: manipulation; /* Убирает задержку и двойной тап для зума на мобильных */
-    }
+    * { touch-action: manipulation; }
     body {
       font-family: 'Times New Roman', Times, serif;
       background-color: var(--bg);
@@ -43,7 +41,7 @@
     
     button, select, input {
       font-family: 'Times New Roman', Times, serif;
-      font-size: 16px; /* 16px предотвращает авто-зум на iOS при фокусе */
+      font-size: 16px;
     }
 
     button {
@@ -59,6 +57,8 @@
     button:hover { box-shadow: 0 3px 8px rgba(92, 107, 192, 0.3); }
     button:active { transform: scale(0.98); }
     button.secondary { background: #90a4ae; }
+    button.success { background: #66bb6a; }
+    button.warning { background: #ffa726; }
 
     .container {
       display: flex;
@@ -162,14 +162,14 @@
       border-radius: 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.06);
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+      -webkit-overflow-scrolling: touch;
     }
 
     .schedule-grid {
       display: grid;
       grid-template-columns: 90px repeat(6, minmax(100px, 1fr));
       gap: 6px;
-      min-width: 750px; /* Гарантирует горизонтальный скролл на телефоне, а не сжатие */
+      min-width: 750px;
     }
 
     .grid-header {
@@ -198,6 +198,9 @@
     .schedule-cell.bg-russian { background-color: var(--russian); }
     .schedule-cell.bg-literature { background-color: var(--literature); }
     .schedule-cell.bg-new { background-color: var(--new); }
+    .schedule-cell.bg-double { 
+      background: linear-gradient(135deg, var(--russian) 50%, var(--literature) 50%);
+    }
 
     .schedule-cell.highlight {
       border: 2px solid var(--highlight-border) !important;
@@ -211,12 +214,27 @@
       pointer-events: none;
     }
 
+    .schedule-cell.selecting {
+      border: 3px dashed var(--primary) !important;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
     .cell-display {
       width: 100%;
       text-align: center;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 500;
-      pointer-events: none; /* Чтобы клик проходил сквозь текст на ячейку */
+      pointer-events: none;
+      line-height: 1.3;
+    }
+
+    .cell-display.double {
+      font-size: 13px;
     }
 
     .cell-select {
@@ -226,7 +244,7 @@
       border: none;
       background: transparent;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 16px; /* Важно для iOS */
+      font-size: 16px;
       text-align: center;
       outline: none;
       font-weight: 500;
@@ -265,32 +283,93 @@
     }
     .save-btn:hover { background: #43a047; }
 
-    .menu-toggle { display: none; } /* Скрыт на всех устройствах, так как сайдбар теперь внизу на мобильных */
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .modal-content h3 { margin-top: 0; color: var(--primary); }
+    .modal-content select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-buttons button { flex: 1; }
 
     @keyframes popIn {
       from { transform: scale(0.8); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* Мобильная адаптация */
-    @media (max-width: 900px) {
-      .container {
-        flex-direction: column;
-        padding: 12px;
+    /* Печать */
+    @media print {
+      body { background: white; }
+      .header, .filters, .sidebar, .save-btn, .modal { display: none !important; }
+      .container { padding: 0; }
+      .main-content { width: 100%; }
+      .schedule-wrapper { 
+        box-shadow: none; 
+        padding: 0;
+        page-break-inside: avoid;
       }
+      .schedule-grid {
+        min-width: 0;
+        grid-template-columns: 80px repeat(6, 1fr);
+      }
+      .schedule-cell {
+        min-height: 40px;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+      }
+      .grid-header {
+        background: #e0e0e0;
+        border: 1px solid #000;
+      }
+      .time-cell { font-size: 12px; }
+      .cell-display { font-size: 12px; }
+    }
+
+    @media print.landscape {
+      @page { size: landscape; margin: 1cm; }
+      .schedule-grid {
+        grid-template-columns: 70px repeat(6, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .container { flex-direction: column; padding: 12px; }
       .sidebar {
         width: 100%;
         max-width: 100%;
         margin-top: 20px;
-        order: 2; /* Гарантирует, что сайдбар будет ПОД расписанием */
+        order: 2;
       }
-      .main-content {
-        order: 1;
-        width: 100%;
-      }
+      .main-content { order: 1; width: 100%; }
       .header h1 { font-size: 18px; }
       .controls button { padding: 6px 10px; font-size: 13px; }
-      .schedule-cell { min-height: 56px; } /* Чуть выше для удобного тапа пальцем */
+      .schedule-cell { min-height: 56px; }
     }
   </style>
 </head>
@@ -304,8 +383,11 @@
         <option value="permanent">Постоянное</option>
         <option value="nextWeek">Следующая неделя</option>
       </select>
+      <button class="warning" onclick="openDoubleLessonModal()">+ Сдвоенный</button>
       <button class="secondary" onclick="sendCommand('resetActual')">Сбросить факт</button>
       <button class="secondary" onclick="sendCommand('startNewWeek')">Новая неделя</button>
+      <button class="success" onclick="printSchedule()">🖨️ Печать</button>
+      <button class="success" onclick="printScheduleLandscape()">📄 PDF</button>
     </div>
   </div>
 
@@ -345,8 +427,35 @@
 
   <button class="save-btn" id="saveBtn" onclick="saveData()">💾 Сохранить изменения</button>
 
+  <!-- Модальное окно для сдвоенного урока -->
+  <div class="modal" id="doubleLessonModal">
+    <div class="modal-content">
+      <h3>Сдвоенный урок</h3>
+      <p>Выберите два предмета для одного урока:</p>
+      <select id="doubleSubject1"></select>
+      <select id="doubleSubject2"></select>
+      <div class="modal-buttons">
+        <button class="secondary" onclick="closeDoubleLessonModal()">Отмена</button>
+        <button onclick="confirmDoubleLesson()">Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для редактирования сдвоенного урока -->
+  <div class="modal" id="editDoubleModal">
+    <div class="modal-content">
+      <h3>Редактировать сдвоенный урок</h3>
+      <select id="editSubject1"></select>
+      <select id="editSubject2"></select>
+      <div class="modal-buttons">
+        <button class="secondary" onclick="closeEditDoubleModal()">Отмена</button>
+        <button onclick="saveEditDoubleLesson()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyEkvc0ew9nqPWtRAXcWmNZksOOhTe2qkOZTL6tScrY2uFByNyFh1YS4y8BlusUuIYvaA/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxSRXkvR3B7crXaV_ONLzU9u4hvuCvNH1WplmLv4mFm9ZLFnJvxEq3EEqsMgwkvtmDxuA/exec";
     
     const times = [
       "0<br><small>8:00-8:30</small>", "1<br><small>8:30-9:10</small>", "2<br><small>9:20-10:00</small>",
@@ -366,6 +475,7 @@
     };
 
     let activeHighlightTarget = null;
+    let selectingCellForDouble = null;
 
     function getSubjectClass(name) {
       if (name.includes('Русский')) return 'subj-russian';
@@ -385,6 +495,15 @@
 
     function getUniqueClasses() {
       return [...new Set(state.subjects.map(s => String(s.className)).filter(c => c && c.trim() !== ''))].sort();
+    }
+
+    function isDoubleLesson(val) {
+      return val && val.includes('/');
+    }
+
+    function parseDoubleLesson(val) {
+      if (!isDoubleLesson(val)) return [val];
+      return val.split('/').map(s => s.trim());
     }
 
     async function loadData() {
@@ -417,7 +536,7 @@
         renderSchedule();
         populateClassFilter();
       } catch (e) {
-        alert('Ошибка загрузки данных. Проверьте имя листа в скрипте.');
+        alert('Ошибка загрузки данных.');
         console.error(e);
       }
     }
@@ -430,8 +549,13 @@
           for (let c = 1; c < grid[r].length; c++) {
             const val = String(grid[r][c] || '').trim();
             if (!val || val === 'нет урока') continue;
-            const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
-            if (match) match[type]++;
+            
+            // Обработка сдвоенных уроков
+            const lessons = parseDoubleLesson(val);
+            lessons.forEach(lesson => {
+              const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === lesson);
+              if (match) match[type]++;
+            });
           }
         }
       };
@@ -465,7 +589,6 @@
           <div class="hours-display">Часов: Факт <b>${item.fact}</b> / План <b>${item.plan}</b></div>
         `;
         
-        // Hover для десктопа
         div.addEventListener('mouseenter', () => highlightCells(item.name, item.className));
         div.addEventListener('mouseleave', clearHighlight);
         
@@ -543,22 +666,63 @@
 
           const display = document.createElement('span');
           display.className = 'cell-display';
-          display.textContent = val === 'нет урока' ? '—' : val;
+          
+          if (isDoubleLesson(val)) {
+            display.classList.add('double');
+            const parts = parseDoubleLesson(val);
+            display.innerHTML = parts.join('<br>');
+            cell.classList.add('bg-double');
+          } else {
+            display.textContent = val === 'нет урока' ? '—' : val;
+            if (val !== 'нет урока') {
+              const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
+              if (subjObj) cell.classList.add(getBgClass(subjObj.name));
+            }
+          }
           
           const select = document.createElement('select');
           select.className = 'cell-select';
           select.innerHTML = optionsHtml;
-          select.value = val;
+          select.value = isDoubleLesson(val) ? 'нет урока' : val;
           
-          if (val !== 'нет урока') {
-            const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === val);
-            if (subjObj) cell.classList.add(getBgClass(subjObj.name));
-          }
-          
-          // Логика тапов
           cell.addEventListener('click', (e) => {
-            // Если клик был по уже открытому select, ничего не делаем, пусть браузер обрабатывает
             if (cell.classList.contains('editing')) return;
+
+            // Режим выбора ячейки для сдвоенного урока
+            if (selectingCellForDouble) {
+              const newVal = selectingCellForDouble;
+              cell.dataset.value = newVal;
+              
+              if (isDoubleLesson(newVal)) {
+                display.classList.add('double');
+                const parts = parseDoubleLesson(newVal);
+                display.innerHTML = parts.join('<br>');
+                cell.classList.remove('bg-russian', 'bg-literature', 'bg-new');
+                cell.classList.add('bg-double');
+              } else {
+                display.classList.remove('double');
+                display.textContent = newVal === 'нет урока' ? '—' : newVal;
+                cell.classList.remove('bg-double');
+                if (newVal !== 'нет урока') {
+                  const subjObj = state.subjects.find(s => `${s.name} ${s.className}`.trim() === newVal);
+                  if (subjObj) cell.classList.add(getBgClass(subjObj.name));
+                }
+              }
+              
+              if (!state.schedule[r]) state.schedule[r] = [];
+              state.schedule[r][c] = newVal;
+              
+              markDirty();
+              calculateHours();
+              renderSidebar();
+              applyFilters();
+              clearHighlight();
+              activeHighlightTarget = null;
+              
+              cell.classList.remove('selecting');
+              selectingCellForDouble = null;
+              return;
+            }
 
             const currentVal = cell.dataset.value;
             
@@ -567,12 +731,16 @@
               return;
             }
 
+            // Если сдвоенный урок — открываем модальное окно для редактирования
+            if (isDoubleLesson(currentVal)) {
+              openEditDoubleModal(cell, r, c);
+              return;
+            }
+
             if (activeHighlightTarget === currentVal) {
-              // Второй тап по выделенному: редактируем
               enterEditMode(cell, select);
             } else {
-              // Первый тап: выделяем
-              e.preventDefault(); // Предотвращаем стандартное поведение
+              e.preventDefault();
               clearHighlight();
               activeHighlightTarget = currentVal;
               const parts = currentVal.split(' ');
@@ -583,9 +751,10 @@
           select.addEventListener('change', () => {
             const newVal = select.value;
             cell.dataset.value = newVal;
+            display.classList.remove('double');
             display.textContent = newVal === 'нет урока' ? '—' : newVal;
             
-            cell.className = 'schedule-cell'; // Сброс классов
+            cell.className = 'schedule-cell';
             cell.classList.remove('editing');
             select.style.display = 'none';
             
@@ -617,31 +786,36 @@
       cell.classList.add('editing');
       select.style.display = 'block';
       select.focus();
-      // Для мобильных устройств пытаемся сразу открыть нативный список
       if ('ontouchstart' in window) {
         setTimeout(() => {
           select.click();
-          select.showPicker?.(); // Современный API для открытия select
+          select.showPicker?.();
         }, 50);
       }
     }
 
-    // Сброс выделения и режима редактирования при клике вне ячеек
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.schedule-cell') && !e.target.closest('.sidebar-item')) {
+      if (!e.target.closest('.schedule-cell') && !e.target.closest('.sidebar-item') && !e.target.closest('.modal')) {
         clearHighlight();
         activeHighlightTarget = null;
         document.querySelectorAll('.schedule-cell.editing').forEach(c => {
           c.classList.remove('editing');
           c.querySelector('.cell-select').style.display = 'none';
         });
+        if (selectingCellForDouble) {
+          document.querySelectorAll('.schedule-cell.selecting').forEach(c => c.classList.remove('selecting'));
+          selectingCellForDouble = null;
+        }
       }
     });
 
     function highlightCells(subj, cls) {
       const target = `${subj} ${String(cls)}`.trim();
       document.querySelectorAll('.schedule-cell').forEach(cell => {
-        if (cell.dataset.value === target) cell.classList.add('highlight');
+        const val = cell.dataset.value;
+        if (val === target || (isDoubleLesson(val) && parseDoubleLesson(val).includes(target))) {
+          cell.classList.add('highlight');
+        }
       });
       document.querySelectorAll('.sidebar-item').forEach(item => {
         const sName = item.querySelector('.subject-select').value;
@@ -677,8 +851,12 @@
 
         if (dayFilter !== 'all' && col !== parseInt(dayFilter)) isMatch = false;
         if (classFilter !== 'all') {
-          if (val.includes(classFilter)) count++;
-          else isMatch = false;
+          if (val.includes(classFilter)) {
+            count++;
+            if (isDoubleLesson(val)) count++; // Сдвоенный урок считается за 2
+          } else {
+            isMatch = false;
+          }
         }
         cell.classList.toggle('filtered-out', !isMatch);
       });
@@ -744,7 +922,108 @@
       renderSidebar();
     });
 
-    // Init
+    // Сдвоенные уроки
+    function openDoubleLessonModal() {
+      const select1 = document.getElementById('doubleSubject1');
+      const select2 = document.getElementById('doubleSubject2');
+      const options = state.subjects.filter(s => String(s.className).trim() !== '')
+        .map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
+      
+      select1.innerHTML = options;
+      select2.innerHTML = options;
+      
+      document.getElementById('doubleLessonModal').classList.add('active');
+    }
+
+    function closeDoubleLessonModal() {
+      document.getElementById('doubleLessonModal').classList.remove('active');
+    }
+
+    function confirmDoubleLesson() {
+      const subj1 = document.getElementById('doubleSubject1').value;
+      const subj2 = document.getElementById('doubleSubject2').value;
+      
+      if (subj1 === subj2) {
+        alert('Выберите разные предметы');
+        return;
+      }
+      
+      closeDoubleLessonModal();
+      selectingCellForDouble = `${subj1}/${subj2}`;
+      
+      document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.classList.add('selecting');
+      });
+      
+      alert('Теперь выберите ячейку в расписании для сдвоенного урока');
+    }
+
+    function openEditDoubleModal(cell, row, col) {
+      const val = cell.dataset.value;
+      const parts = parseDoubleLesson(val);
+      
+      const select1 = document.getElementById('editSubject1');
+      const select2 = document.getElementById('editSubject2');
+      const options = `<option value="нет урока">— убрать —</option>` + 
+        state.subjects.filter(s => String(s.className).trim() !== '')
+          .map(s => `<option value="${s.name} ${s.className}">${s.name} ${s.className}</option>`).join('');
+      
+      select1.innerHTML = options;
+      select2.innerHTML = options;
+      
+      select1.value = parts[0] || 'нет урока';
+      select2.value = parts[1] || 'нет урока';
+      
+      document.getElementById('editDoubleModal').dataset.row = row;
+      document.getElementById('editDoubleModal').dataset.col = col;
+      document.getElementById('editDoubleModal').classList.add('active');
+    }
+
+    function closeEditDoubleModal() {
+      document.getElementById('editDoubleModal').classList.remove('active');
+    }
+
+    function saveEditDoubleLesson() {
+      const subj1 = document.getElementById('editSubject1').value;
+      const subj2 = document.getElementById('editSubject2').value;
+      const row = parseInt(document.getElementById('editDoubleModal').dataset.row);
+      const col = parseInt(document.getElementById('editDoubleModal').dataset.col);
+      
+      let newVal;
+      if (subj1 === 'нет урока' && subj2 === 'нет урока') {
+        newVal = 'нет урока';
+      } else if (subj1 === 'нет урока') {
+        newVal = subj2;
+      } else if (subj2 === 'нет урока') {
+        newVal = subj1;
+      } else {
+        newVal = `${subj1}/${subj2}`;
+      }
+      
+      if (!state.schedule[row]) state.schedule[row] = [];
+      state.schedule[row][col] = newVal;
+      
+      closeEditDoubleModal();
+      markDirty();
+      calculateHours();
+      renderSchedule();
+      renderSidebar();
+      applyFilters();
+    }
+
+    // Печать
+    function printSchedule() {
+      window.print();
+    }
+
+    function printScheduleLandscape() {
+      document.body.classList.add('landscape');
+      setTimeout(() => {
+        window.print();
+        document.body.classList.remove('landscape');
+      }, 100);
+    }
+
     loadData();
   </script>
 </body>
