@@ -79,6 +79,25 @@
     }
     .sidebar h3 { margin-top: 0; margin-bottom: 12px; border-bottom: 2px solid var(--primary); padding-bottom: 6px; font-size: 18px; }
 
+    .total-hours {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .total-hours-label {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    .total-hours-value {
+      font-size: 20px;
+    }
+
     .sidebar-item {
       display: flex;
       flex-direction: column;
@@ -283,7 +302,6 @@
     }
     .save-btn:hover { background: #43a047; }
 
-    /* Модальное окно */
     .modal {
       display: none;
       position: fixed;
@@ -323,7 +341,6 @@
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* Печать */
     @media print {
       body { background: white; }
       .header, .filters, .sidebar, .save-btn, .modal { display: none !important; }
@@ -420,6 +437,12 @@
 
     <div class="sidebar" id="sidebar">
       <h3>Предметы и классы</h3>
+      <div class="total-hours">
+        <div class="total-hours-label">Всего часов за неделю</div>
+        <div class="total-hours-value">
+          Факт <span id="totalFactHours">0</span> / План <span id="totalPlanHours">0</span>
+        </div>
+      </div>
       <div id="sidebarList"></div>
       <button class="add-row-btn" onclick="addSidebarItem()">+ Добавить строку</button>
     </div>
@@ -427,7 +450,6 @@
 
   <button class="save-btn" id="saveBtn" onclick="saveData()">💾 Сохранить изменения</button>
 
-  <!-- Модальное окно для сдвоенного урока -->
   <div class="modal" id="doubleLessonModal">
     <div class="modal-content">
       <h3>Сдвоенный урок</h3>
@@ -441,7 +463,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно для редактирования сдвоенного урока -->
   <div class="modal" id="editDoubleModal">
     <div class="modal-content">
       <h3>Редактировать сдвоенный урок</h3>
@@ -543,24 +564,36 @@
 
     function calculateHours() {
       state.subjects.forEach(s => { s.plan = 0; s.fact = 0; });
+      
+      let totalFact = 0;
+      let totalPlan = 0;
+      
       const countInGrid = (grid, type) => {
-        if (!grid) return;
+        if (!grid) return 0;
+        let count = 0;
         for (let r = 1; r < grid.length; r++) {
           for (let c = 1; c < grid[r].length; c++) {
             const val = String(grid[r][c] || '').trim();
             if (!val || val === 'нет урока') continue;
             
-            // Обработка сдвоенных уроков
             const lessons = parseDoubleLesson(val);
             lessons.forEach(lesson => {
               const match = state.subjects.find(s => `${s.name} ${s.className}`.trim() === lesson);
-              if (match) match[type]++;
+              if (match) {
+                match[type]++;
+                count++;
+              }
             });
           }
         }
+        return count;
       };
-      countInGrid(state.permanent, 'plan');
-      countInGrid(state.actual, 'fact');
+      
+      totalPlan = countInGrid(state.permanent, 'plan');
+      totalFact = countInGrid(state.actual, 'fact');
+      
+      document.getElementById('totalFactHours').textContent = totalFact;
+      document.getElementById('totalPlanHours').textContent = totalPlan;
     }
 
     function renderSidebar() {
@@ -688,7 +721,6 @@
           cell.addEventListener('click', (e) => {
             if (cell.classList.contains('editing')) return;
 
-            // Режим выбора ячейки для сдвоенного урока
             if (selectingCellForDouble) {
               const newVal = selectingCellForDouble;
               cell.dataset.value = newVal;
@@ -731,7 +763,6 @@
               return;
             }
 
-            // Если сдвоенный урок — открываем модальное окно для редактирования
             if (isDoubleLesson(currentVal)) {
               openEditDoubleModal(cell, r, c);
               return;
@@ -853,7 +884,7 @@
         if (classFilter !== 'all') {
           if (val.includes(classFilter)) {
             count++;
-            if (isDoubleLesson(val)) count++; // Сдвоенный урок считается за 2
+            if (isDoubleLesson(val)) count++;
           } else {
             isMatch = false;
           }
@@ -922,7 +953,6 @@
       renderSidebar();
     });
 
-    // Сдвоенные уроки
     function openDoubleLessonModal() {
       const select1 = document.getElementById('doubleSubject1');
       const select2 = document.getElementById('doubleSubject2');
@@ -1011,7 +1041,6 @@
       applyFilters();
     }
 
-    // Печать
     function printSchedule() {
       window.print();
     }
